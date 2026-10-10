@@ -290,8 +290,8 @@ const CONFIG = {
   // Game icons are loaded from this folder as <folder>/<game-name>.png  e.g. img/orion-stars.png, img/juwa-2-0.png (see img/README.txt)
   imgDir: "img",
   // Admin panel database (Supabase). Paste your Project URL and the public "anon" key. Leave "" to use the settings in this file.
-  supabaseUrl: "",
-  supabaseKey: ""
+  supabaseUrl: "https://pnokhxacmvhdmhqizatt.supabase.co",
+  supabaseKey: "sb_publishable_p4T9PqXfMmpt_CZxUI587Q_M5kGMaak"
 };
 // Add an `img` path to any game to use its real icon, e.g. {n:"Juwa", img:"img/juwa.png"}
 const GAMES = ["Orion Stars", "Milky Way", "Game Vault", "Juwa", "Sollo777", "Juwa 2.0", "Ultra Panda", "Vblink", "Panda Master", "Fire Kirin", "Big Winner", "Blue Dragon", "Vegas Sweeps", "Cash Frenzy", "High Stake", "VegasX", "Moolah", "River Sweeps", "Casino Royale", "Game Room", "Joker", "Vegas Roll", "Winstar", "Yolo 777", "Para Casino", "Mega Spin", "Loot Casino", "Cash Machine", "Casino Ignite", "E-Games"].map(n=>({n}));
@@ -335,7 +335,7 @@ const PHOTOS={
 async function loadRemote(){
   if(!CONFIG.supabaseUrl||!CONFIG.supabaseKey)return;
   const base=CONFIG.supabaseUrl.replace(/\/$/,"")+"/rest/v1/";
-  const hd={apikey:CONFIG.supabaseKey,Authorization:"Bearer "+CONFIG.supabaseKey};
+  const hd={apikey:CONFIG.supabaseKey};if(CONFIG.supabaseKey.startsWith("eyJ"))hd.Authorization="Bearer "+CONFIG.supabaseKey;
   const get=p=>fetch(base+p,{headers:hd}).then(r=>r.ok?r.json():Promise.reject(new Error(r.status)));
   try{
     const [s,g,o]=await Promise.race([
