@@ -100,7 +100,7 @@ footer small{display:block;margin-top:14px;opacity:.7}
 .act:hover{filter:brightness(.95)}
 /* bottom nav */
 nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);z-index:40;padding-bottom:env(safe-area-inset-bottom,0px)}
-nav .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+nav .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
 nav a,nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;font-size:10.5px;font-weight:600;color:#4b5563;background:none;border:0;text-decoration:none}
 nav svg{width:21px;height:21px}
 nav .n1{color:#25d366}nav .n2{color:#229ed9}nav .n3{color:#1877f2}nav .n4{color:#f5a623}
@@ -150,6 +150,17 @@ nav .n1{position:relative}
 @media(min-width:560px){.pgrid{grid-template-columns:repeat(6,1fr)}}
 @media(prefers-reduced-motion:reduce){.tkin{animation:none}}
 .perk{min-width:0;overflow:hidden}
+a.pm{text-decoration:none;color:inherit;transition:border-color .2s,box-shadow .2s,transform .1s}
+a.pm:hover{border-color:#b9ccff;box-shadow:0 6px 18px -10px rgba(25,82,223,.5)}
+a.pm:active{transform:scale(.97)}
+a.pm{text-decoration:none;color:inherit;transition:border-color .2s,box-shadow .2s}
+a.pm:hover{border-color:#b9ccff;box-shadow:0 6px 18px -10px rgba(25,82,223,.5)}
+.pd{font-size:12px;font-weight:700;color:var(--blue);margin-top:-3px;letter-spacing:.2px}
+.pm[role=button]{cursor:pointer}
+[hidden]{display:none!important}
+.a-zg{grid-column:1/-1;background:#1d9bf0;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:14px}
+nav .n5{color:#1d9bf0;cursor:pointer}
+#fzg{cursor:pointer}
 </style>
 </head>
 <body>
@@ -159,6 +170,7 @@ nav .n1{position:relative}
 <symbol id="i-tg" viewBox="0 0 24 24"><path fill="currentColor" d="M21.9 4.1a1.4 1.4 0 0 0-1.5-.2L2.6 10.8c-1 .4-1 1.8.1 2.1l4.4 1.4 1.7 5.3c.2.7 1.1.9 1.6.4l2.5-2.4 4.5 3.3c.7.5 1.6.1 1.8-.7L22 5.5c.1-.5-.1-1-.1-1.4zM9.4 14.3l8.2-5.1-6.6 6.3-.3 3.1-1.3-4.3z"/></symbol>
 <symbol id="i-fb" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 22v-8.2h2.8l.4-3.2h-3.2V8.6c0-.9.3-1.5 1.6-1.5h1.7V4.2c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v2.3H7.4v3.2h2.8V22h3.3z"/></symbol>
 <symbol id="i-wa" viewBox="0 0 24 24"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></symbol>
+<symbol id="i-zangi" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 3h14a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-7l-5 4v-4H5a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zM9 8h6l-6 6h6"/></symbol>
 <symbol id="i-chat" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.4 8.4 0 0 1-12.2 7.5L3 20.5l1.6-5.4A8.4 8.4 0 1 1 21 11.5z"/></symbol>
 <symbol id="i-mail" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm-1 1.5 9 6.5 9-6.5"/></symbol>
 <symbol id="i-bolt" viewBox="0 0 24 24"><path fill="currentColor" d="M13 2 4 14h6l-1 8 9-12h-6z"/></symbol>
@@ -205,16 +217,11 @@ nav .n1{position:relative}
   </div>
   <div class="list" id="list" aria-live="polite"></div>
 
-  <div class="sec"><h3>Payment methods</h3><span class="badge">6 options</span></div>
-  <div class="pgrid">
-    <div class="pm"><span class="pi" data-pay="chime"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#1ec677"/><text x="24" y="29" text-anchor="middle" font-size="13" font-weight="800" fill="#fff" font-family="Arial,Helvetica,sans-serif" >chime</text></svg></span><b>Chime</b></div>
-    <div class="pm"><span class="pi" data-pay="cash-app"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#00d632"/><text x="24" y="35" text-anchor="middle" font-size="30" font-weight="800" fill="#fff" font-family="Arial,Helvetica,sans-serif" >$</text></svg></span><b>Cash App</b></div>
-    <div class="pm"><span class="pi" data-pay="paypal"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#003087"/><text x="19" y="34" text-anchor="middle" font-size="27" font-weight="800" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-style="italic">P</text><text x="29" y="34" text-anchor="middle" font-size="27" font-weight="800" fill="#009cde" font-family="Arial,Helvetica,sans-serif" font-style="italic">P</text></svg></span><b>PayPal</b></div>
-    <div class="pm"><span class="pi" data-pay="venmo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#3d95ce"/><text x="24" y="35" text-anchor="middle" font-size="30" font-weight="800" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-style="italic">V</text></svg></span><b>Venmo</b></div>
-    <div class="pm"><span class="pi" data-pay="zelle"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#6d1ed4"/><text x="24" y="35" text-anchor="middle" font-size="30" font-weight="800" fill="#fff" font-family="Arial,Helvetica,sans-serif" >Z</text></svg></span><b>Zelle</b></div>
-    <div class="pm"><span class="pi" data-pay="debit-card"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#0f1b3d"/><rect x="9" y="13" width="30" height="22" rx="4" fill="#fff"/><rect x="9" y="18" width="30" height="5" fill="#0f1b3d"/><rect x="13" y="27" width="10" height="3" rx="1.5" fill="#94a3b8"/></svg></span><b>Debit Card</b></div>
-  </div>
-  <p class="pnote">Message us on WhatsApp to confirm which option works best for you before you send any payment.</p>
+  <section id="psec">
+    <div class="sec"><h3>Payment methods</h3><span class="badge" id="pcount"></span></div>
+    <div class="pgrid" id="pgrid"></div>
+    <p class="pnote">Message us on WhatsApp to confirm which option works best for you before you send any payment.</p>
+  </section>
 
 </main>
 
@@ -227,6 +234,7 @@ nav .n1{position:relative}
     <a id="ftg" target="_blank" rel="noopener"><svg><use href="#i-tg"/></svg>Telegram</a>
     <a id="ffb" target="_blank" rel="noopener"><svg><use href="#i-fb"/></svg>Facebook</a>
     <a id="fmail" href="#"><svg><use href="#i-mail"/></svg><span></span></a>
+    <a id="fzg" role="button" tabindex="0"><svg><use href="#i-zangi"/></svg><span></span></a>
   </div>
   <small>© <span id="yr"></span> Online Game Zone. All rights reserved.</small>
 </div></footer>
@@ -244,6 +252,7 @@ nav .n1{position:relative}
       <a class="act a-fb" id="afb" target="_blank" rel="noopener"><svg><use href="#i-fb"/></svg>Facebook</a>
       <a class="act a-wa" id="awa" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg>WhatsApp</a>
       <a class="act a-ml" id="aml"><svg><use href="#i-mail"/></svg>Email</a>
+      <button class="act a-zg" id="azg" type="button"><svg><use href="#i-zangi"/></svg><span>Zangi</span></button>
     </div>
   </div>
 </div>
@@ -277,6 +286,7 @@ nav .n1{position:relative}
   <a class="n2" id="ntg" target="_blank" rel="noopener"><svg><use href="#i-tg"/></svg>Telegram</a>
   <a class="n3" id="nfb" target="_blank" rel="noopener"><svg><use href="#i-fb"/></svg>Facebook</a>
   <a class="n4" id="nml"><svg><use href="#i-mail"/></svg>Email</a>
+  <button class="n5" id="nzg" type="button"><svg><use href="#i-zangi"/></svg><span>Zangi</span></button>
 </div></nav>
 
 <script>
@@ -287,6 +297,8 @@ const CONFIG = {
   email: "Onlinegamezone814@gmail.com",
   // Your WhatsApp number with country code, digits only (example: 923001234567)
   whatsapp: "971562283263",
+  // Zangi number shown in the contact buttons (tap to copy). Leave "" to hide Zangi from the contact buttons.
+  zangi: "3101106919",
   // Game icons are loaded from this folder as <folder>/<game-name>.png  e.g. img/orion-stars.png, img/juwa-2-0.png (see img/README.txt)
   imgDir: "img",
   // Admin panel database (Supabase). Paste your Project URL and the public "anon" key. Leave "" to use the settings in this file.
@@ -296,6 +308,9 @@ const CONFIG = {
 // Add an `img` path to any game to use its real icon, e.g. {n:"Juwa", img:"img/juwa.png"}
 const GAMES = ["Orion Stars", "Milky Way", "Game Vault", "Juwa", "Sollo777", "Juwa 2.0", "Ultra Panda", "Vblink", "Panda Master", "Fire Kirin", "Big Winner", "Blue Dragon", "Vegas Sweeps", "Cash Frenzy", "High Stake", "VegasX", "Moolah", "River Sweeps", "Casino Royale", "Game Room", "Joker", "Vegas Roll", "Winstar", "Yolo 777", "Para Casino", "Mega Spin", "Loot Casino", "Cash Machine", "Casino Ignite", "E-Games"].map(n=>({n}));
 /* ============================================ */
+
+// Payment methods shown on the site (links and icons can be changed from the admin panel)
+const PAY = ["Chime", "Cash App", "PayPal", "Venmo", "Zelle", "Debit Card", "Google Pay", "Apple Pay", "Zangi"].map(name => ({ name, link: "", detail: name === "Zangi" ? "3101106919" : "" }));
 
 /* Game icons (embedded, no image folder needed). */
 const PHOTOS={
@@ -332,21 +347,61 @@ const PHOTOS={
 };
 
 /* ---- Admin panel data: loaded from Supabase when configured (falls back to the defaults in this file) ---- */
+
+/* ---- Payment methods: built-in badges (replaced by your uploaded icon or img/pay-<name>.png) ---- */
+const PT=(x,y,s,f,ex)=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${s}" font-weight="800" fill="${f}" font-family="Arial,Helvetica,sans-serif" ${ex||""}>`;
+const PAYART={
+ "chime":'<rect width="48" height="48" rx="12" fill="#1ec677"/>'+PT(24,29,13,"#fff")+'chime</text>',
+ "cash-app":'<rect width="48" height="48" rx="12" fill="#00d632"/>'+PT(24,35,30,"#fff")+'$</text>',
+ "paypal":'<rect width="48" height="48" rx="12" fill="#003087"/>'+PT(19,34,27,"#fff",'font-style="italic"')+'P</text>'+PT(29,34,27,"#009cde",'font-style="italic"')+'P</text>',
+ "venmo":'<rect width="48" height="48" rx="12" fill="#3d95ce"/>'+PT(24,35,30,"#fff",'font-style="italic"')+'V</text>',
+ "zelle":'<rect width="48" height="48" rx="12" fill="#6d1ed4"/>'+PT(24,35,30,"#fff")+'Z</text>',
+ "debit-card":'<rect width="48" height="48" rx="12" fill="#0f1b3d"/><rect x="9" y="13" width="30" height="22" rx="4" fill="#fff"/><rect x="9" y="18" width="30" height="5" fill="#0f1b3d"/><rect x="13" y="27" width="10" height="3" rx="1.5" fill="#94a3b8"/>',
+ "google-pay":'<rect x="1" y="1" width="46" height="46" rx="11" fill="#f8fafc" stroke="#dbe3f0" stroke-width="2"/>'+PT(24,28,23,"#4285f4")+'G</text>'+PT(24,40,11,"#5f6368")+'Pay</text>',
+ "apple-pay":'<rect width="48" height="48" rx="12" fill="#000"/><circle cx="21" cy="20" r="5.6" fill="#fff"/><circle cx="27" cy="20" r="5.6" fill="#fff"/><ellipse cx="25" cy="12.5" rx="1.7" ry="3.6" fill="#fff" transform="rotate(28 25 12.5)"/>'+PT(24,40,13,"#fff")+'Pay</text>',
+ "zangi":'<rect width="48" height="48" rx="12" fill="#1d9bf0"/><path d="M11 12h26a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3H26l-8 7v-7h-7a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3z" fill="#fff"/>'+PT(24,29,15,"#1d9bf0")+'Z</text>'
+};
+function renderPayments(){
+  const g=document.getElementById("pgrid");g.innerHTML="";document.getElementById("psec").hidden=!PAY.length;document.getElementById("pcount").textContent=PAY.length+" options";
+  PAY.forEach(p=>{
+    const ok=/^https?:\/\//i.test(p.link||"");
+    const el=document.createElement(ok?"a":"div");el.className="pm";
+    if(ok){el.href=p.link;el.target="_blank";el.rel="noopener noreferrer"}
+    const pi=document.createElement("span");pi.className="pi";const k=p.name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");pi.dataset.pay=k;
+    if(p.icon){const im=new Image();im.alt="";im.src=p.icon;pi.appendChild(im)}
+    else if(PAYART[k])pi.innerHTML='<svg viewBox="0 0 48 48" aria-hidden="true">'+PAYART[k]+"</svg>";
+    else{pi.textContent=p.name.replace(/[^A-Za-z0-9 ]/g,"").split(" ").filter(Boolean).map(w=>w[0]).join("").slice(0,2).toUpperCase();pi.style.cssText="background:linear-gradient(135deg,#475569,#1e293b);color:#fff;display:grid;place-items:center;font-weight:800"}
+    const b=document.createElement("b");b.textContent=p.name;el.append(pi,b);
+    if(p.detail){
+      const d=document.createElement("small");d.className="pd";d.textContent=p.detail;el.appendChild(d);
+      if(!ok){
+        el.setAttribute("role","button");el.tabIndex=0;el.title="Tap to copy";
+        const copy=async()=>{try{await navigator.clipboard.writeText(p.detail);d.textContent="Copied!";setTimeout(()=>d.textContent=p.detail,1500)}catch(e){}};
+        el.addEventListener("click",copy);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();copy()}});
+      }
+    }
+    g.appendChild(el);
+  });
+}
 async function loadRemote(){
   if(!CONFIG.supabaseUrl||!CONFIG.supabaseKey)return;
   const base=CONFIG.supabaseUrl.replace(/\/$/,"")+"/rest/v1/";
   const hd={apikey:CONFIG.supabaseKey};if(CONFIG.supabaseKey.startsWith("eyJ"))hd.Authorization="Bearer "+CONFIG.supabaseKey;
   const get=p=>fetch(base+p,{headers:hd}).then(r=>r.ok?r.json():Promise.reject(new Error(r.status)));
   try{
-    const [s,g,o]=await Promise.race([
+    const [s,g,o,pm]=await Promise.race([
       Promise.all([
         get("settings?select=key,value"),
         get("games?select=name,icon_url&active=eq.true&order=sort.asc,id.asc"),
-        get("offers?select=title,subtitle,chip,image_url&active=eq.true&order=sort.asc,id.asc")
+        get("offers?select=title,subtitle,chip,image_url&active=eq.true&order=sort.asc,id.asc"),
+        get("payments?select=name,link,detail,icon_url&active=eq.true&order=sort.asc,id.asc").catch(()=>get("payments?select=name,link,icon_url&active=eq.true&order=sort.asc,id.asc")).catch(()=>null)
       ]),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),3000))
     ]);
-    s.forEach(r=>{if(r.value&&["whatsapp","telegram","facebook","email"].includes(r.key))CONFIG[r.key]=r.value});
+    s.forEach(r=>{if(r.key==="zangi"){CONFIG.zangi=r.value||"";return}if(!r.value)return;
+      if(["whatsapp","telegram","facebook","email"].includes(r.key))CONFIG[r.key]=r.value;
+    });
+    if(Array.isArray(pm)){PAY.length=0;pm.forEach(x=>PAY.push({name:x.name,link:x.link||"",detail:x.detail||"",icon:x.icon_url||""}))}
     if(g.length){GAMES.length=0;g.forEach(x=>GAMES.push({n:x.name,img:x.icon_url||undefined}))}
     if(o.length){
       const tr=document.getElementById("track");tr.innerHTML="";
@@ -368,6 +423,7 @@ async function loadRemote(){
 
 (async function boot(){
 await loadRemote();
+renderPayments();
 const $=id=>document.getElementById(id);
 const hue=s=>[...s].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360;
 const slug=n=>n.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
@@ -433,6 +489,25 @@ const mail="mailto:"+CONFIG.email;
 ["afb","nfb","ffb"].forEach(i=>$(i).href=CONFIG.facebook);
 ["aml","nml"].forEach(i=>$(i).href=mail);
 $("fmail").href=mail;
+/* Zangi: tap to copy the number */
+(function(){
+  const num=(CONFIG.zangi||"").trim();
+  const ids=["azg","nzg","fzg"];
+  if(!num){ids.forEach(i=>$(i).hidden=true);document.querySelector("nav .in").style.gridTemplateColumns="repeat(4,1fr)";return}
+  const label={azg:"Zangi: "+num+" (tap to copy)",nzg:"Zangi",fzg:"Zangi: "+num};
+  async function copy(t){
+    try{await navigator.clipboard.writeText(t)}catch(e){
+      const x=document.createElement("textarea");x.value=t;x.style.position="fixed";x.style.opacity="0";document.body.appendChild(x);x.select();
+      try{document.execCommand("copy")}catch(_){}x.remove();
+    }
+  }
+  ids.forEach(i=>{
+    const el=$(i),sp=el.querySelector("span");sp.textContent=label[i];
+    const go=async()=>{await copy(num);sp.textContent="Copied! "+num;setTimeout(()=>sp.textContent=label[i],1800)};
+    el.addEventListener("click",go);
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}});
+  });
+})();
 $("nwa").href=wa("Hi, I am interested in your games");$("fwa").href=wa("Hi, I am interested in your games");$("fmail").querySelector("span").textContent=CONFIG.email;
 $("yr").textContent=new Date().getFullYear();
 $("count1").textContent=GAMES.length+" available";$("fc").textContent=GAMES.length;
@@ -487,6 +562,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")hideTerms()});
 
 /* Optional: put official logos in img/pay-chime.png, pay-cash-app.png, pay-paypal.png, pay-venmo.png, pay-zelle.png, pay-debit-card.png */
 document.querySelectorAll(".pi[data-pay]").forEach(el=>{
+  if(el.querySelector("img"))return;
   const im=new Image();im.alt="";im.onload=()=>{el.textContent="";el.appendChild(im)};
   im.src=CONFIG.imgDir+"/pay-"+el.dataset.pay+".png";
 });

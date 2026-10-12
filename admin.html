@@ -61,6 +61,7 @@ input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(25,8
     <div class="tabs">
       <button data-t="games" class="on">Games</button>
       <button data-t="offers">Offers / Banners</button>
+      <button data-t="pay">Payment methods</button>
       <button data-t="contact">Contact links</button>
     </div>
 
@@ -88,6 +89,25 @@ input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(25,8
       <div id="ol"></div>
     </section>
 
+
+    <section id="t-pay" hidden>
+      <div class="card">
+        <h3>Add a payment method</h3>
+        <p class="hint">The link and the number / ID are optional. A number / ID is shown under the name and copied when a visitor taps it. When you add a link, the method becomes a tap-to-open link on the website (it must start with https://). Icon is optional.</p>
+        <div class="add">
+          <div class="grow"><label>Name</label><input id="pn" type="text" placeholder="e.g. Cash App"></div>
+          <div class="grow"><label>Link</label><input id="pu" type="url" placeholder="https://..."></div>
+          <div class="grow"><label>Number / ID (optional)</label><input id="pd" type="text" placeholder="e.g. 3101106919"></div>
+        </div>
+        <div class="add" style="margin-top:10px">
+          <button class="btn ghost" id="ppick">Choose icon</button>
+          <button class="btn" id="padd">Add payment method</button>
+        </div>
+        <p class="muted" id="pfile"></p>
+      </div>
+      <div id="pl"></div>
+    </section>
+
     <section id="t-contact" hidden>
       <div class="card">
         <h3>Contact links</h3>
@@ -96,6 +116,7 @@ input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(25,8
         <label>Telegram link</label><input id="c-telegram" type="url" placeholder="https://t.me/yourname">
         <label>Facebook link</label><input id="c-facebook" type="url" placeholder="https://facebook.com/yourpage">
         <label>Email</label><input id="c-email" type="email" placeholder="you@example.com">
+        <label>Zangi number (shown in the contact buttons, tap to copy. Empty = hidden)</label><input id="c-zangi" type="text" placeholder="3101106919">
         <p style="margin:16px 0 0"><button class="btn" id="csave">Save contact links</button></p>
       </div>
     </section>
@@ -149,13 +170,13 @@ async function login() {
 $("go").onclick = login;
 $("pw").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
 $("out").onclick = () => sb.auth.signOut();
-function show(on) { $("login").hidden = on; $("app").hidden = !on; if (on) { loadGames(); loadOffers(); loadContact(); } }
+function show(on) { $("login").hidden = on; $("app").hidden = !on; if (on) { loadGames(); loadOffers(); loadPay(); loadContact(); } }
 sb.auth.onAuthStateChange((_e, s) => show(!!s));
 sb.auth.getSession().then(({ data }) => show(!!data.session));
 
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
   document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
-  ["games", "offers", "contact"].forEach(t => $("t-" + t).hidden = t !== b.dataset.t);
+  ["games", "offers", "pay", "contact"].forEach(t => $("t-" + t).hidden = t !== b.dataset.t);
 });
 
 /* ---------- shared helpers ---------- */
@@ -250,11 +271,57 @@ $("oadd").onclick = async () => {
   if (error) return fail(error); loadOffers();
 };
 
+/* ---------- payment methods ---------- */
+let pays = [], newPayIcon = null;
+const okLink = v => v === "" || /^https?:\/\//i.test(v);
+async function loadPay() {
+  const { data, error } = await sb.from("payments").select("*").order("sort").order("id");
+  if (error) { $("pl").innerHTML = '<p class="muted">The payments table is missing. Run payments-setup.sql in Supabase first, then refresh this page.</p>'; return; }
+  pays = data; drawPay();
+}
+function drawPay() {
+  const box = $("pl"); box.innerHTML = "";
+  if (!pays.length) box.innerHTML = '<p class="muted">No payment methods yet. Add one above.</p>';
+  pays.forEach((p, i) => {
+    const r = document.createElement("div"); r.className = "row" + (p.active ? "" : " off");
+    let th;
+    if (p.icon_url) { th = document.createElement("img"); th.src = p.icon_url; th.className = "thumb"; th.alt = ""; }
+    else { th = document.createElement("button"); th.className = "thumb"; th.textContent = initials(p.name); th.title = "Using the built-in badge. Click to upload your own icon."; }
+    th.onclick = async () => {
+      const f = await pickFile(); if (!f) return;
+      try { const d = await iconData(f); if (await update("payments", p.id, { icon_url: d })) { p.icon_url = d; drawPay(); toast("Icon updated"); } } catch (e) { fail(e); }
+    };
+    const name = document.createElement("input"); name.type = "text"; name.className = "grow"; name.style.maxWidth = "190px"; name.value = p.name;
+    name.onchange = async () => { const v = name.value.trim(); if (!v) { name.value = p.name; return; } if (await update("payments", p.id, { name: v })) { p.name = v; toast("Saved"); } };
+    const det = document.createElement("input"); det.type = "text"; det.className = "grow"; det.style.maxWidth = "150px"; det.placeholder = "Number / ID"; det.value = p.detail || "";
+    det.onchange = async () => { const v = det.value.trim(); if (await update("payments", p.id, { detail: v })) { p.detail = v; toast("Saved"); } };
+    const link = document.createElement("input"); link.type = "url"; link.className = "grow"; link.placeholder = "https://... (optional)"; link.value = p.link || "";
+    link.onchange = async () => { const v = link.value.trim(); if (!okLink(v)) { toast("Link must start with https://", true); link.value = p.link || ""; return; } if (await update("payments", p.id, { link: v })) { p.link = v; toast("Saved"); } };
+    r.append(th, name, det, link,
+      showHide("Show", p.active, async v => { if (await update("payments", p.id, { active: v })) { p.active = v; r.classList.toggle("off", !v); } }),
+      btn("▲", "ghost", async () => { if (await move(pays, "payments", i, -1)) drawPay(); }),
+      btn("▼", "ghost", async () => { if (await move(pays, "payments", i, 1)) drawPay(); }));
+    if (p.icon_url) r.append(btn("Default icon", "ghost", async () => { if (await update("payments", p.id, { icon_url: null })) { p.icon_url = null; drawPay(); } }));
+    r.append(btn("Delete", "bad", async () => { if (confirm("Delete " + p.name + "?") && await remove("payments", p.id)) { pays = pays.filter(x => x.id !== p.id); drawPay(); } }));
+    box.appendChild(r);
+  });
+}
+$("ppick").onclick = async () => { const f = await pickFile(); if (!f) return; try { newPayIcon = await iconData(f); $("pfile").textContent = "Icon chosen: " + f.name; } catch (e) { fail(e); } };
+$("padd").onclick = async () => {
+  const n = $("pn").value.trim(), l = $("pu").value.trim(), dt = $("pd").value.trim(); if (!n) return toast("Enter a name", true);
+  if (!okLink(l)) return toast("Link must start with https://", true);
+  const sort = pays.length ? Math.max(...pays.map(x => x.sort)) + 10 : 10;
+  const { error } = await sb.from("payments").insert({ name: n, link: l, detail: dt, icon_url: newPayIcon, sort });
+  if (error) return fail(error);
+  $("pn").value = ""; $("pu").value = ""; $("pd").value = ""; $("pfile").textContent = ""; newPayIcon = null; toast("Added"); loadPay();
+};
+
 /* ---------- contact links ---------- */
-const KEYS = ["whatsapp", "telegram", "facebook", "email"];
+const KEYS = ["whatsapp", "telegram", "facebook", "email", "zangi"];
 async function loadContact() {
   const { data, error } = await sb.from("settings").select("key,value"); if (error) return fail(error);
   data.forEach(r => { const el = $("c-" + r.key); if (el) el.value = r.value; });
+  if (!data.some(r => r.key === "zangi")) $("c-zangi").value = "3101106919";
 }
 async function saveSettings() {
   const rows = KEYS.map(k => ({ key: k, value: k === "whatsapp" ? $("c-" + k).value.replace(/\D/g, "") : $("c-" + k).value.trim() }));
