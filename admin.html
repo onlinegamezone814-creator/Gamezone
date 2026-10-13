@@ -40,6 +40,16 @@ input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(25,8
 .toast.err{background:var(--bad)}
 .login{max-width:380px;margin:12vh auto;padding:0 16px}
 .muted{color:var(--mute);font-size:13px}
+select{height:42px;border:1.5px solid var(--line);border-radius:10px;padding:0 10px;font:inherit;background:#fff;color:var(--ink)}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.vbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.vbox b{display:block;font-size:26px;color:var(--navy)}.vbox span{font-size:12px;font-weight:700;color:var(--mute)}
+.vcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:14px}
+.vcols .card{margin:0}.kv{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:5px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border:0}.kv b{color:var(--navy)}
+table.vt{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+.vt th{text-align:left;color:var(--mute);font-size:12px;padding:6px 8px;border-bottom:2px solid var(--line)}
+.vt td{padding:7px 8px;border-bottom:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -62,6 +72,7 @@ input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(25,8
       <button data-t="games" class="on">Games</button>
       <button data-t="offers">Offers / Banners</button>
       <button data-t="pay">Payment methods</button>
+      <button data-t="vis">Visitors</button>
       <button data-t="contact">Contact links</button>
     </div>
 
@@ -106,6 +117,21 @@ input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(25,8
         <p class="muted" id="pfile"></p>
       </div>
       <div id="pl"></div>
+    </section>
+
+    <section id="t-vis" hidden>
+      <div class="card">
+        <h3>Visitors</h3>
+        <p class="hint">Anonymous statistics from your website. You cannot see names or phone numbers here. Your own visits are not counted once you have logged in to this panel on that browser. Location is only an estimate from the visitor's time zone.</p>
+        <div class="add">
+          <div><label>Period</label><select id="vp"><option value="0">Today</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option></select></div>
+          <button class="btn" id="vref">Refresh</button>
+          <button class="btn bad sm" id="vclr">Delete data older than 90 days</button>
+        </div>
+      </div>
+      <div id="vsum" class="vgrid"></div>
+      <div id="vcols" class="vcols"></div>
+      <div class="card"><h3>Recent activity</h3><div id="vrec" style="overflow-x:auto"></div></div>
     </section>
 
     <section id="t-contact" hidden>
@@ -170,13 +196,13 @@ async function login() {
 $("go").onclick = login;
 $("pw").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
 $("out").onclick = () => sb.auth.signOut();
-function show(on) { $("login").hidden = on; $("app").hidden = !on; if (on) { loadGames(); loadOffers(); loadPay(); loadContact(); } }
+function show(on) { $("login").hidden = on; $("app").hidden = !on; if (on) { try { localStorage.setItem("ogz_admin", "1"); } catch (e) {} loadGames(); loadOffers(); loadPay(); loadContact(); } }
 sb.auth.onAuthStateChange((_e, s) => show(!!s));
 sb.auth.getSession().then(({ data }) => show(!!data.session));
 
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
   document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
-  ["games", "offers", "pay", "contact"].forEach(t => $("t-" + t).hidden = t !== b.dataset.t);
+  ["games", "offers", "pay", "vis", "contact"].forEach(t => $("t-" + t).hidden = t !== b.dataset.t); if (b.dataset.t === "vis") loadVis();
 });
 
 /* ---------- shared helpers ---------- */
@@ -314,6 +340,53 @@ $("padd").onclick = async () => {
   const { error } = await sb.from("payments").insert({ name: n, link: l, detail: dt, icon_url: newPayIcon, sort });
   if (error) return fail(error);
   $("pn").value = ""; $("pu").value = ""; $("pd").value = ""; $("pfile").textContent = ""; newPayIcon = null; toast("Added"); loadPay();
+};
+
+/* ---------- visitors ---------- */
+const EVL = { visit: "Opened the site", game_click: "Tapped a game", contact_click: "Tapped a contact button" };
+function tally(rows, f) { const m = {}; rows.forEach(r => { const k = f(r); if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]); }
+function listCard(title, entries) {
+  const c = document.createElement("div"); c.className = "card"; const h = document.createElement("h3"); h.textContent = title; c.appendChild(h);
+  if (!entries.length) { const p = document.createElement("p"); p.className = "muted"; p.textContent = "No data yet"; c.appendChild(p); }
+  entries.slice(0, 8).forEach(([k, n]) => { const d = document.createElement("div"); d.className = "kv"; const s = document.createElement("span"); s.textContent = k; const b = document.createElement("b"); b.textContent = n; d.append(s, b); c.appendChild(d); });
+  return c;
+}
+async function loadVis() {
+  const days = Number($("vp").value);
+  const since = new Date(days === 0 ? new Date().setHours(0, 0, 0, 0) : Date.now() - days * 864e5).toISOString();
+  let rows = [];
+  for (let from = 0; from < 5000; from += 1000) {
+    const { data, error } = await sb.from("visits").select("*").gte("created_at", since).order("created_at", { ascending: false }).range(from, from + 999);
+    if (error) { $("vsum").innerHTML = '<p class="muted">The visits table is missing. Run visitors-setup.sql in Supabase first, then refresh.</p>'; $("vcols").innerHTML = ""; $("vrec").innerHTML = ""; return; }
+    rows = rows.concat(data); if (data.length < 1000) break;
+  }
+  const visits = rows.filter(r => r.event === "visit");
+  const sum = [["Visits", visits.length], ["Unique visitors", new Set(visits.map(r => r.visitor)).size], ["Game taps", rows.filter(r => r.event === "game_click").length], ["Contact taps", rows.filter(r => r.event === "contact_click").length]];
+  $("vsum").innerHTML = ""; sum.forEach(([l, n]) => { const d = document.createElement("div"); d.className = "vbox"; const b = document.createElement("b"); b.textContent = n; const s = document.createElement("span"); s.textContent = l; d.append(b, s); $("vsum").appendChild(d); });
+  const cols = $("vcols"); cols.innerHTML = "";
+  cols.append(
+    listCard("Top games tapped", tally(rows.filter(r => r.event === "game_click"), r => r.detail)),
+    listCard("Contact buttons tapped", tally(rows.filter(r => r.event === "contact_click"), r => r.detail)),
+    listCard("Where visitors came from", tally(visits, r => r.source)),
+    listCard("Devices", tally(visits, r => r.device)),
+    listCard("Time zones (approximate place)", tally(visits, r => r.tz)));
+  const rec = $("vrec"); rec.innerHTML = "";
+  if (!rows.length) { rec.innerHTML = '<p class="muted">No activity in this period yet.</p>'; return; }
+  const t = document.createElement("table"); t.className = "vt";
+  const head = document.createElement("tr"); ["Time", "Visitor", "What", "Detail", "From", "Device", "Time zone"].forEach(x => { const th = document.createElement("th"); th.textContent = x; head.appendChild(th); });
+  t.appendChild(head);
+  rows.slice(0, 100).forEach(r => {
+    const tr = document.createElement("tr");
+    [new Date(r.created_at).toLocaleString(), "V-" + r.visitor.slice(-4), EVL[r.event] || r.event, r.detail, r.source, r.device, r.tz].forEach(x => { const td = document.createElement("td"); td.textContent = x; tr.appendChild(td); });
+    t.appendChild(tr);
+  });
+  rec.appendChild(t);
+}
+$("vref").onclick = loadVis; $("vp").onchange = loadVis;
+$("vclr").onclick = async () => {
+  if (!confirm("Delete all visit data older than 90 days?")) return;
+  const { error } = await sb.from("visits").delete().lt("created_at", new Date(Date.now() - 90 * 864e5).toISOString());
+  if (error) return fail(error); toast("Old data deleted"); loadVis();
 };
 
 /* ---------- contact links ---------- */
