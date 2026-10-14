@@ -161,6 +161,11 @@ a.pm:hover{border-color:#b9ccff;box-shadow:0 6px 18px -10px rgba(25,82,223,.5)}
 .a-zg{grid-column:1/-1;background:#1d9bf0;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:14px}
 nav .n5{color:#1d9bf0;cursor:pointer}
 #fzg{cursor:pointer}
+.slide.photo{padding:0;background-color:#0b1530}
+.cap{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:40px 18px 32px;background:linear-gradient(to top,rgba(0,0,0,.74),rgba(0,0,0,0));color:#fff}
+.cap h2{margin:0;max-width:none;font-size:clamp(17px,4.6vw,26px);line-height:1.15;letter-spacing:-.3px;text-shadow:0 1px 6px rgba(0,0,0,.45)}
+.cap p{margin:5px 0 0;max-width:none;font-size:clamp(12px,3.2vw,15px);font-weight:600;opacity:.95}
+.cap .chip{display:inline-block;margin-top:8px}
 </style>
 </head>
 <body>
@@ -273,6 +278,8 @@ nav .n5{color:#1d9bf0;cursor:pointer}
       <ul><li>Payment and cashout options, minimums and timing are confirmed by our support team and can differ by game.</li><li>Always message us first before you send any payment.</li></ul>
       <h4>Play responsibly</h4>
       <ul><li>Only play with money you can afford to lose. If gaming stops being fun, take a break.</li></ul>
+      <h4>Visit statistics</h4>
+      <ul><li>We record anonymous statistics about visits: that the site was opened, which game or contact button was tapped, device type, time zone, and how you found the site. We do not record your name or phone number on this site.</li></ul>
       <h4>Contact</h4>
       <p>Reach us on WhatsApp, Telegram, Facebook or by email at <a id="tmail"></a>.</p>
     </div>
@@ -383,6 +390,27 @@ function renderPayments(){
     g.appendChild(el);
   });
 }
+/* ---- Anonymous visit statistics (shown in the admin panel > Visitors). No names or phone numbers are collected. ---- */
+function logEvent(event,detail){
+  try{
+    if(!CONFIG.supabaseUrl||!CONFIG.supabaseKey)return;
+    const ua=navigator.userAgent;
+    if(navigator.webdriver||/bot|crawl|spider|preview|headless/i.test(ua))return;
+    if(localStorage.getItem("ogz_admin"))return;               // your own visits (after you log in to admin) are not counted
+    let vid=localStorage.getItem("vid");
+    if(!vid){vid=Math.random().toString(36).slice(2,10)+Date.now().toString(36);localStorage.setItem("vid",vid)}
+    const os=/iPhone|iPad/.test(ua)?"iOS":/Android/.test(ua)?"Android":/Windows/.test(ua)?"Windows":/Mac/.test(ua)?"Mac":/Linux/.test(ua)?"Linux":"Other";
+    const device=(/Mobi|Android|iPhone/.test(ua)?"Mobile":"Desktop")+" / "+os;
+    const q=new URLSearchParams(location.search);let ref="";
+    try{ref=document.referrer?new URL(document.referrer).hostname.replace(/^www\./,""):""}catch(e){}
+    const source=q.get("utm_source")||(q.get("fbclid")?"facebook":"")||ref||"direct";
+    const body={visitor:vid,event,detail:String(detail||"").slice(0,80),source:source.slice(0,80),device:device.slice(0,60),
+      tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||"").slice(0,60),lang:(navigator.language||"").slice(0,20)};
+    const hd={"Content-Type":"application/json",apikey:CONFIG.supabaseKey,Prefer:"return=minimal"};
+    if(CONFIG.supabaseKey.startsWith("eyJ"))hd.Authorization="Bearer "+CONFIG.supabaseKey;
+    fetch(CONFIG.supabaseUrl.replace(/\/$/,"")+"/rest/v1/visits",{method:"POST",headers:hd,body:JSON.stringify(body),keepalive:true}).catch(()=>{});
+  }catch(e){}
+}
 async function loadRemote(){
   if(!CONFIG.supabaseUrl||!CONFIG.supabaseKey)return;
   const base=CONFIG.supabaseUrl.replace(/\/$/,"")+"/rest/v1/";
@@ -410,6 +438,13 @@ async function loadRemote(){
         if(x.image_url){
           d.style.backgroundImage='url("'+x.image_url+'")';d.style.backgroundSize="cover";d.style.backgroundPosition="center";
           d.classList.add("photo");
+          if(x.title||x.subtitle||x.chip){
+            const cp=document.createElement("div");cp.className="cap";
+            if(x.title){const h=document.createElement("h2");h.textContent=x.title;cp.appendChild(h)}
+            if(x.subtitle){const p=document.createElement("p");p.textContent=x.subtitle;cp.appendChild(p)}
+            if(x.chip){const c=document.createElement("span");c.className="chip";c.textContent=x.chip;cp.appendChild(c)}
+            d.appendChild(cp);
+          }
         }else{
           const h=document.createElement("h2");h.textContent=x.title;d.appendChild(h);
           if(x.subtitle){const p=document.createElement("p");p.textContent=x.subtitle;d.appendChild(p)}
@@ -423,6 +458,7 @@ async function loadRemote(){
 
 (async function boot(){
 await loadRemote();
+logEvent("visit","");
 renderPayments();
 const $=id=>document.getElementById(id);
 const hue=s=>[...s].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360;
@@ -489,6 +525,10 @@ const mail="mailto:"+CONFIG.email;
 ["afb","nfb","ffb"].forEach(i=>$(i).href=CONFIG.facebook);
 ["aml","nml"].forEach(i=>$(i).href=mail);
 $("fmail").href=mail;
+/* Count taps on the contact buttons */
+[["awa","whatsapp"],["nwa","whatsapp"],["fwa","whatsapp"],["atg","telegram"],["ntg","telegram"],["ftg","telegram"],
+ ["afb","facebook"],["nfb","facebook"],["ffb","facebook"],["aml","email"],["nml","email"],["fmail","email"],
+ ["azg","zangi"],["nzg","zangi"],["fzg","zangi"]].forEach(([id,k])=>{const el=$(id);if(el)el.addEventListener("click",()=>logEvent("contact_click",k))});
 /* Zangi: tap to copy the number */
 (function(){
   const num=(CONFIG.zangi||"").trim();
@@ -545,7 +585,7 @@ q.addEventListener("input",render);$("clr").onclick=()=>{q.value="";render();q.f
 
 /* Popup */
 const ov=$("ov");let last;
-function openModal(g){last=document.activeElement;$("mt").textContent=g.n;$("mi").replaceWith(Object.assign(icon(g),{id:"mi"}));
+function openModal(g){logEvent("game_click",g.n);last=document.activeElement;$("mt").textContent=g.n;$("mi").replaceWith(Object.assign(icon(g),{id:"mi"}));
   $("aml").href=mail+"?subject="+encodeURIComponent("Access request: "+g.n);$("ov").dataset.game=g.n;$("awa").href=wa("Hi, I want access to "+g.n);ov.classList.add("open");$("mx").focus()}
 function closeModal(){ov.classList.remove("open");last&&last.focus()}
 $("mx").onclick=closeModal;ov.addEventListener("click",e=>{if(e.target===ov)closeModal()});

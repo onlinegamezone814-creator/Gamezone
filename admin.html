@@ -50,6 +50,7 @@ select{height:42px;border:1.5px solid var(--line);border-radius:10px;padding:0 1
 table.vt{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
 .vt th{text-align:left;color:var(--mute);font-size:12px;padding:6px 8px;border-bottom:2px solid var(--line)}
 .vt td{padding:7px 8px;border-bottom:1px solid var(--line)}
+.slidepic{width:210px;height:105px;border-radius:10px;object-fit:cover;background:#0b1530;flex:none}
 </style>
 </head>
 <body>
@@ -70,7 +71,7 @@ table.vt{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
   <div class="wrap">
     <div class="tabs">
       <button data-t="games" class="on">Games</button>
-      <button data-t="offers">Offers / Banners</button>
+      <button data-t="offers">Slider pictures</button>
       <button data-t="pay">Payment methods</button>
       <button data-t="vis">Visitors</button>
       <button data-t="contact">Contact links</button>
@@ -93,12 +94,16 @@ table.vt{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
 
     <section id="t-offers" hidden>
       <div class="card">
-        <h3>Offer slides</h3>
-        <p class="hint">Each offer is one slide at the top of the site. If you add a banner image, the image is shown instead of the text.</p>
-        <button class="btn" id="oadd">+ Add offer</button>
+        <h3>Slider pictures</h3>
+        <p class="hint">These are the slides at the top of the website. Add as many pictures as you like: choose several at once. Wide pictures work best (about 2:1, for example 1200 x 600). Under each picture you can write a heading and some text, and it is shown on the picture. Leave the boxes empty to show the picture alone.</p>
+        <div class="add">
+          <button class="btn" id="oadd">+ Add pictures</button>
+          <button class="btn ghost" id="otext">+ Add a text-only slide</button>
+        </div>
       </div>
       <div id="ol"></div>
     </section>
+
 
 
     <section id="t-pay" hidden>
@@ -260,8 +265,37 @@ $("gadd").onclick = async () => {
   $("gn").value = ""; $("gfile").textContent = ""; newIcon = null; toast("Game added"); loadGames();
 };
 
-/* ---------- offers ---------- */
-let offers = [];
+/* ---------- slider pictures ---------- */
+let offers = [], usedFallback = false;
+const BUCKET = "slides";
+function pickMany() {
+  return new Promise(res => { const i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.multiple = true; i.onchange = () => res([...i.files]); i.click(); });
+}
+function photoBlob(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const w = Math.min(1200, img.width), h = Math.round(img.height * w / img.width);
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url); c.toBlob(b => b ? res(b) : rej(new Error("Could not process " + file.name)), "image/jpeg", .82);
+    };
+    img.onerror = () => rej(new Error("Could not read " + file.name)); img.src = url;
+  });
+}
+const blobToData = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+// Saves the picture in Supabase Storage (fast). If Storage is not set up yet, it is saved inside the database instead.
+async function savePhoto(file) {
+  const blob = await photoBlob(file);
+  const path = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
+  const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: "image/jpeg", cacheControl: "31536000" });
+  if (!error) return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  console.warn("Storage upload failed, saving inside the database instead", error);
+  usedFallback = true; return blobToData(blob);
+}
+const storagePath = url => { const m = (url || "").match(/\/storage\/v1\/object\/public\/slides\/(.+)$/); return m ? decodeURIComponent(m[1]) : null; };
+async function dropPhoto(url) { const p = storagePath(url); if (p) { try { await sb.storage.from(BUCKET).remove([p]); } catch (e) { console.warn(e); } } }
+
 async function loadOffers() {
   const { data, error } = await sb.from("offers").select("*").order("sort").order("id");
   if (error) return fail(error); offers = data; drawOffers();
@@ -272,28 +306,46 @@ function field(label, val, cls) {
 }
 function drawOffers() {
   const box = $("ol"); box.innerHTML = "";
+  if (!offers.length) box.innerHTML = '<p class="muted">No slides yet. Press "+ Add pictures" above.</p>';
   offers.forEach((o, i) => {
     const r = document.createElement("div"); r.className = "row" + (o.active ? "" : " off");
-    const bn = document.createElement(o.image_url ? "img" : "div"); bn.className = "banner"; if (o.image_url) { bn.src = o.image_url; bn.alt = ""; }
+    const pic = document.createElement(o.image_url ? "img" : "div"); pic.className = "slidepic";
+    if (o.image_url) { pic.src = o.image_url; pic.alt = ""; } else { pic.style.cssText = "display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;background:linear-gradient(120deg,#b45309,#f59e0b)"; pic.textContent = "TEXT SLIDE"; }
     const g = document.createElement("div"); g.className = "og";
-    const [w1, title] = field("Title", o.title, "full"), [w2, sub] = field("Text under title", o.subtitle), [w3, chip] = field("Button text", o.chip);
+    const [w1, title] = field("Heading (optional)", o.title, "full"), [w2, sub] = field("Text about the picture (optional)", o.subtitle, "full"), [w3, chip] = field("Small button text (optional)", o.chip, "full");
     g.append(w1, w2, w3);
     const acts = document.createElement("div"); acts.className = "full"; acts.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px";
     acts.append(
-      btn("Save text", "", async () => { if (await update("offers", o.id, { title: title.value, subtitle: sub.value, chip: chip.value })) { Object.assign(o, { title: title.value, subtitle: sub.value, chip: chip.value }); toast("Saved"); } }),
-      btn("Banner image", "ghost", async () => { const f = await pickFile(); if (!f) return; try { const d = await bannerData(f); if (await update("offers", o.id, { image_url: d })) { o.image_url = d; drawOffers(); toast("Banner updated"); } } catch (e) { fail(e); } }));
-    if (o.image_url) acts.append(btn("Remove image", "ghost", async () => { if (await update("offers", o.id, { image_url: null })) { o.image_url = null; drawOffers(); } }));
+      btn("Save text", "", async () => { const patch = { title: title.value, subtitle: sub.value, chip: chip.value }; if (await update("offers", o.id, patch)) { Object.assign(o, patch); toast("Saved"); } }),
+      btn(o.image_url ? "Change picture" : "Add picture", "ghost", async () => {
+        const f = (await pickMany())[0]; if (!f) return;
+        try { toast("Uploading…"); usedFallback = false; const url = await savePhoto(f); const old = o.image_url; if (await update("offers", o.id, { image_url: url })) { o.image_url = url; await dropPhoto(old); drawOffers(); toast("Picture updated"); } } catch (e) { fail(e); }
+      }));
+    if (o.image_url) acts.append(btn("Remove picture", "ghost", async () => { const old = o.image_url; if (await update("offers", o.id, { image_url: null })) { o.image_url = null; await dropPhoto(old); drawOffers(); } }));
     acts.append(
       showHide("Show", o.active, async v => { if (await update("offers", o.id, { active: v })) { o.active = v; r.classList.toggle("off", !v); } }),
       btn("▲", "ghost", async () => { if (await move(offers, "offers", i, -1)) drawOffers(); }),
       btn("▼", "ghost", async () => { if (await move(offers, "offers", i, 1)) drawOffers(); }),
-      btn("Delete", "bad", async () => { if (confirm("Delete this offer?") && await remove("offers", o.id)) { offers = offers.filter(x => x.id !== o.id); drawOffers(); } }));
-    g.appendChild(acts); r.append(bn, g); box.appendChild(r);
+      btn("Delete", "bad", async () => { if (confirm("Delete this slide?") && await remove("offers", o.id)) { await dropPhoto(o.image_url); offers = offers.filter(x => x.id !== o.id); drawOffers(); } }));
+    g.appendChild(acts); r.append(pic, g); box.appendChild(r);
   });
 }
 $("oadd").onclick = async () => {
+  const files = await pickMany(); if (!files.length) return;
+  let sort = offers.length ? Math.max(...offers.map(o => o.sort)) : 0, ok = 0; usedFallback = false;
+  for (let k = 0; k < files.length; k++) {
+    toast("Uploading " + (k + 1) + " of " + files.length + "…");
+    try {
+      const url = await savePhoto(files[k]); sort += 10;
+      const { error } = await sb.from("offers").insert({ title: "", subtitle: "", chip: "", image_url: url, sort }); if (error) throw error; ok++;
+    } catch (e) { fail(e); }
+  }
+  toast(ok + " picture(s) added" + (usedFallback ? ". Run slides-setup.sql in Supabase to make them load faster." : ""));
+  loadOffers();
+};
+$("otext").onclick = async () => {
   const sort = offers.length ? Math.max(...offers.map(o => o.sort)) + 10 : 10;
-  const { error } = await sb.from("offers").insert({ title: "New offer", subtitle: "", chip: "Get access", sort });
+  const { error } = await sb.from("offers").insert({ title: "New slide", subtitle: "", chip: "", sort });
   if (error) return fail(error); loadOffers();
 };
 
