@@ -50,7 +50,7 @@ select{height:42px;border:1.5px solid var(--line);border-radius:10px;padding:0 1
 table.vt{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
 .vt th{text-align:left;color:var(--mute);font-size:12px;padding:6px 8px;border-bottom:2px solid var(--line)}
 .vt td{padding:7px 8px;border-bottom:1px solid var(--line)}
-.slidepic{width:210px;height:105px;border-radius:10px;object-fit:cover;background:#0b1530;flex:none}
+.slidepic{width:210px;height:118px;border-radius:10px;object-fit:contain;background:#0b1530;flex:none}
 </style>
 </head>
 <body>
@@ -95,7 +95,7 @@ table.vt{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
     <section id="t-offers" hidden>
       <div class="card">
         <h3>Slider pictures</h3>
-        <p class="hint">These are the slides at the top of the website. Add as many pictures as you like: choose several at once. Wide pictures work best (about 2:1, for example 1200 x 600). Under each picture you can write a heading and some text, and it is shown on the picture. Leave the boxes empty to show the picture alone.</p>
+        <p class="hint">These are the slides at the top of the website. Add as many pictures as you like: choose several at once. The whole picture is always shown, never cropped. Pictures that are wide (16:9, for example 1280 x 720) fill the slider best. Under each picture you can write a heading and some text, and it is shown on the picture. Leave the boxes empty to show the picture alone.</p>
         <div class="add">
           <button class="btn" id="oadd">+ Add pictures</button>
           <button class="btn ghost" id="otext">+ Add a text-only slide</button>

@@ -166,6 +166,19 @@ nav .n5{color:#1d9bf0;cursor:pointer}
 .cap h2{margin:0;max-width:none;font-size:clamp(17px,4.6vw,26px);line-height:1.15;letter-spacing:-.3px;text-shadow:0 1px 6px rgba(0,0,0,.45)}
 .cap p{margin:5px 0 0;max-width:none;font-size:clamp(12px,3.2vw,15px);font-weight:600;opacity:.95}
 .cap .chip{display:inline-block;margin-top:8px}
+
+/* picture slides: the whole picture is always visible (never cropped) */
+.slider.hasphoto .slide{aspect-ratio:4/3}
+@media(min-width:640px){.slider.hasphoto .slide{aspect-ratio:16/9}}
+.slide.photo{display:flex;flex-direction:column;padding:0;background:#0b1530}
+.slide.photo::before,.slide.photo::after{display:none}
+.pbox{position:relative;flex:1;min-height:0;overflow:hidden}
+.pbg{position:absolute;inset:-24px;background-size:cover;background-position:center;filter:blur(20px) brightness(.65)}
+.pimg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.cap{position:static;flex:none;padding:8px 14px 24px;background:#0b1530;color:#fff}
+.cap h2{font-size:clamp(15px,4vw,20px);text-shadow:none}
+.cap p{font-size:clamp(12px,3vw,14px)}
+.cap .chip{margin-top:5px;padding:4px 12px;font-size:11px}
 </style>
 </head>
 <body>
@@ -436,8 +449,11 @@ async function loadRemote(){
       o.forEach((x,i)=>{
         const d=document.createElement("div");d.className="slide s"+(i%3+1);
         if(x.image_url){
-          d.style.backgroundImage='url("'+x.image_url+'")';d.style.backgroundSize="cover";d.style.backgroundPosition="center";
           d.classList.add("photo");
+          const box=document.createElement("div");box.className="pbox";
+          const bg=document.createElement("div");bg.className="pbg";bg.style.backgroundImage='url("'+x.image_url+'")';
+          const im=document.createElement("img");im.className="pimg";im.src=x.image_url;im.alt=x.title||"";
+          box.append(bg,im);d.appendChild(box);
           if(x.title||x.subtitle||x.chip){
             const cp=document.createElement("div");cp.className="cap";
             if(x.title){const h=document.createElement("h2");h.textContent=x.title;cp.appendChild(h)}
@@ -445,6 +461,7 @@ async function loadRemote(){
             if(x.chip){const c=document.createElement("span");c.className="chip";c.textContent=x.chip;cp.appendChild(c)}
             d.appendChild(cp);
           }
+          document.querySelector(".slider").classList.add("hasphoto");
         }else{
           const h=document.createElement("h2");h.textContent=x.title;d.appendChild(h);
           if(x.subtitle){const p=document.createElement("p");p.textContent=x.subtitle;d.appendChild(p)}
