@@ -319,6 +319,8 @@ const CONFIG = {
   whatsapp: "971562283263",
   // Zangi number shown in the contact buttons (tap to copy). Leave "" to hide Zangi from the contact buttons.
   zangi: "3101106919",
+  // Live chat (free, tawk.to): paste the two codes from your tawk.to widget link, like "65f0abc123def/1hq9xyzab". Empty = no live chat.
+  tawk: "6adb324ca7f600347c5edab7/default",
   // Game icons are loaded from this folder as <folder>/<game-name>.png  e.g. img/orion-stars.png, img/juwa-2-0.png (see img/README.txt)
   imgDir: "img",
   // Admin panel database (Supabase). Paste your Project URL and the public "anon" key. Leave "" to use the settings in this file.
@@ -439,7 +441,7 @@ async function loadRemote(){
       ]),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),3000))
     ]);
-    s.forEach(r=>{if(r.key==="zangi"){CONFIG.zangi=r.value||"";return}if(!r.value)return;
+    s.forEach(r=>{if(r.key==="zangi"){CONFIG.zangi=r.value||"";return}if(r.key==="tawk"){CONFIG.tawk=r.value||"";return}if(!r.value)return;
       if(["whatsapp","telegram","facebook","email"].includes(r.key))CONFIG[r.key]=r.value;
     });
     if(Array.isArray(pm)){PAY.length=0;pm.forEach(x=>PAY.push({name:x.name,link:x.link||"",detail:x.detail||"",icon:x.icon_url||""}))}
@@ -542,6 +544,16 @@ const mail="mailto:"+CONFIG.email;
 ["afb","nfb","ffb"].forEach(i=>$(i).href=CONFIG.facebook);
 ["aml","nml"].forEach(i=>$(i).href=mail);
 $("fmail").href=mail;
+/* Live chat (tawk.to): messages arrive in your tawk.to app / email, and your replies show here */
+(function(){
+  let t=(CONFIG.tawk||"").trim().replace(/^https?:\/\/embed\.tawk\.to\//i,"").replace(/\/+$/,"");
+  if(!/^[a-z0-9]{10,40}(\/[a-z0-9]+)?$/i.test(t))return;
+  const [pid,wid]=t.split("/");
+  window.Tawk_API=window.Tawk_API||{};
+  window.Tawk_API.customStyle={visibility:{desktop:{position:"br",xOffset:16,yOffset:84},mobile:{position:"br",xOffset:8,yOffset:76}}};
+  const s=document.createElement("script");s.async=true;s.charset="UTF-8";s.setAttribute("crossorigin","*");
+  s.src="https://embed.tawk.to/"+pid+"/"+(wid||"default");document.head.appendChild(s);
+})();
 /* Count taps on the contact buttons */
 [["awa","whatsapp"],["nwa","whatsapp"],["fwa","whatsapp"],["atg","telegram"],["ntg","telegram"],["ftg","telegram"],
  ["afb","facebook"],["nfb","facebook"],["ffb","facebook"],["aml","email"],["nml","email"],["fmail","email"],

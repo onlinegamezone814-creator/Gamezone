@@ -148,6 +148,7 @@ table.vt{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
         <label>Facebook link</label><input id="c-facebook" type="url" placeholder="https://facebook.com/yourpage">
         <label>Email</label><input id="c-email" type="email" placeholder="you@example.com">
         <label>Zangi number (shown in the contact buttons, tap to copy. Empty = hidden)</label><input id="c-zangi" type="text" placeholder="3101106919">
+        <label>Live chat code from tawk.to (empty = no live chat)</label><input id="c-tawk" type="text" placeholder="65f0abc123def/1hq9xyzab">
         <p style="margin:16px 0 0"><button class="btn" id="csave">Save contact links</button></p>
       </div>
     </section>
@@ -442,7 +443,7 @@ $("vclr").onclick = async () => {
 };
 
 /* ---------- contact links ---------- */
-const KEYS = ["whatsapp", "telegram", "facebook", "email", "zangi"];
+const KEYS = ["whatsapp", "telegram", "facebook", "email", "zangi", "tawk"];
 async function loadContact() {
   const { data, error } = await sb.from("settings").select("key,value"); if (error) return fail(error);
   data.forEach(r => { const el = $("c-" + r.key); if (el) el.value = r.value; });
