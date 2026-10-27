@@ -127,13 +127,13 @@ table.vt{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
     <section id="t-vis" hidden>
       <div class="card">
         <h3>Visitors</h3>
-        <p class="hint">Anonymous statistics from your website. You cannot see names or phone numbers here. Your own visits are not counted once you have logged in to this panel on that browser. Location is only an estimate from the visitor's time zone.</p>
+        <p class="hint">Anonymous statistics from your website. Nothing is ever deleted automatically: the totals below keep counting from the first visit. You cannot see names or phone numbers here. Your own visits are not counted once you have logged in to this panel on that browser. Location is only an estimate from the visitor's time zone.</p>
         <div class="add">
-          <div><label>Period</label><select id="vp"><option value="0">Today</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option></select></div>
+          <div><label>Period</label><select id="vp"><option value="-1" selected>All time (lifetime)</option><option value="0">Today</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 365 days</option></select></div>
           <button class="btn" id="vref">Refresh</button>
-          <button class="btn bad sm" id="vclr">Delete data older than 90 days</button>
         </div>
       </div>
+      <p class="muted" id="vnote"></p>
       <div id="vsum" class="vgrid"></div>
       <div id="vcols" class="vcols"></div>
       <div class="card"><h3>Recent activity</h3><div id="vrec" style="overflow-x:auto"></div></div>
@@ -404,43 +404,71 @@ function listCard(title, entries) {
   entries.slice(0, 8).forEach(([k, n]) => { const d = document.createElement("div"); d.className = "kv"; const s = document.createElement("span"); s.textContent = k; const b = document.createElement("b"); b.textContent = n; d.append(s, b); c.appendChild(d); });
   return c;
 }
-async function loadVis() {
-  const days = Number($("vp").value);
-  const since = new Date(days === 0 ? new Date().setHours(0, 0, 0, 0) : Date.now() - days * 864e5).toISOString();
-  let rows = [];
-  for (let from = 0; from < 5000; from += 1000) {
-    const { data, error } = await sb.from("visits").select("*").gte("created_at", since).order("created_at", { ascending: false }).range(from, from + 999);
-    if (error) { $("vsum").innerHTML = '<p class="muted">The visits table is missing. Run visitors-setup.sql in Supabase first, then refresh.</p>'; $("vcols").innerHTML = ""; $("vrec").innerHTML = ""; return; }
-    rows = rows.concat(data); if (data.length < 1000) break;
-  }
+function statsFromRows(rows) {
   const visits = rows.filter(r => r.event === "visit");
-  const sum = [["Visits", visits.length], ["Unique visitors", new Set(visits.map(r => r.visitor)).size], ["Game taps", rows.filter(r => r.event === "game_click").length], ["Contact taps", rows.filter(r => r.event === "contact_click").length]];
-  $("vsum").innerHTML = ""; sum.forEach(([l, n]) => { const d = document.createElement("div"); d.className = "vbox"; const b = document.createElement("b"); b.textContent = n; const s = document.createElement("span"); s.textContent = l; d.append(b, s); $("vsum").appendChild(d); });
+  const top = (list, f) => tally(list, f).slice(0, 8).map(([label, n]) => ({ label, n }));
+  return {
+    visits: visits.length, unique: new Set(visits.map(r => r.visitor)).size,
+    game_taps: rows.filter(r => r.event === "game_click").length, contact_taps: rows.filter(r => r.event === "contact_click").length,
+    first: rows.length ? rows[rows.length - 1].created_at : null,
+    games: top(rows.filter(r => r.event === "game_click"), r => r.detail), contacts: top(rows.filter(r => r.event === "contact_click"), r => r.detail),
+    sources: top(visits, r => r.source), devices: top(visits, r => r.device), zones: top(visits, r => r.tz)
+  };
+}
+async function loadVis() {
+  const days = Number($("vp").value); // -1 = all time, 0 = today
+  const since = days < 0 ? null : new Date(days === 0 ? new Date().setHours(0, 0, 0, 0) : Date.now() - days * 864e5).toISOString();
+  const missing = () => { $("vsum").innerHTML = '<p class="muted">The visits table is missing. Run visitors-setup.sql in Supabase first, then refresh.</p>'; $("vcols").innerHTML = ""; $("vrec").innerHTML = ""; $("vnote").textContent = ""; };
+
+  // latest 100 activities
+  let q = sb.from("visits").select("*").order("created_at", { ascending: false }).limit(100);
+  if (since) q = q.gte("created_at", since);
+  const { data: recent, error: e1 } = await q;
+  if (e1) return missing();
+
+  // exact totals, counted inside the database (no row limit, so lifetime numbers stay correct)
+  let stats = null, note = "";
+  const r2 = await sb.rpc("visit_stats", { p_since: since });
+  if (!r2.error && r2.data) stats = r2.data;
+  else {
+    let rows = [];
+    for (let from = 0; from < 5000; from += 1000) {
+      let qq = sb.from("visits").select("*").order("created_at", { ascending: false }).range(from, from + 999);
+      if (since) qq = qq.gte("created_at", since);
+      const { data, error } = await qq; if (error) return missing();
+      rows = rows.concat(data); if (data.length < 1000) break;
+    }
+    stats = statsFromRows(rows);
+    note = rows.length >= 5000 ? "Only the latest 5,000 records are counted. Run visitors-stats.sql in Supabase to count every visit since the beginning." : "";
+  }
+  const first = stats.first ? new Date(stats.first).toLocaleDateString() : null;
+  $("vnote").textContent = note || (days < 0 ? (first ? "All time: counting since " + first : "All time: no visits recorded yet") : "");
+
+  const sum = [["Visits", stats.visits], ["Unique visitors", stats.unique], ["Game taps", stats.game_taps], ["Contact taps", stats.contact_taps]];
+  $("vsum").innerHTML = ""; sum.forEach(([l, n]) => { const d = document.createElement("div"); d.className = "vbox"; const b = document.createElement("b"); b.textContent = Number(n).toLocaleString(); const s = document.createElement("span"); s.textContent = l; d.append(b, s); $("vsum").appendChild(d); });
+  const ent = a => (a || []).map(x => [x.label, Number(x.n)]);
   const cols = $("vcols"); cols.innerHTML = "";
   cols.append(
-    listCard("Top games tapped", tally(rows.filter(r => r.event === "game_click"), r => r.detail)),
-    listCard("Contact buttons tapped", tally(rows.filter(r => r.event === "contact_click"), r => r.detail)),
-    listCard("Where visitors came from", tally(visits, r => r.source)),
-    listCard("Devices", tally(visits, r => r.device)),
-    listCard("Time zones (approximate place)", tally(visits, r => r.tz)));
+    listCard("Top games tapped", ent(stats.games)),
+    listCard("Contact buttons tapped", ent(stats.contacts)),
+    listCard("Where visitors came from", ent(stats.sources)),
+    listCard("Devices", ent(stats.devices)),
+    listCard("Time zones (approximate place)", ent(stats.zones)));
+
   const rec = $("vrec"); rec.innerHTML = "";
-  if (!rows.length) { rec.innerHTML = '<p class="muted">No activity in this period yet.</p>'; return; }
+  if (!recent.length) { rec.innerHTML = '<p class="muted">No activity in this period yet.</p>'; return; }
   const t = document.createElement("table"); t.className = "vt";
   const head = document.createElement("tr"); ["Time", "Visitor", "What", "Detail", "From", "Device", "Time zone"].forEach(x => { const th = document.createElement("th"); th.textContent = x; head.appendChild(th); });
   t.appendChild(head);
-  rows.slice(0, 100).forEach(r => {
+  recent.forEach(r => {
     const tr = document.createElement("tr");
     [new Date(r.created_at).toLocaleString(), "V-" + r.visitor.slice(-4), EVL[r.event] || r.event, r.detail, r.source, r.device, r.tz].forEach(x => { const td = document.createElement("td"); td.textContent = x; tr.appendChild(td); });
     t.appendChild(tr);
   });
   rec.appendChild(t);
+  const more = document.createElement("p"); more.className = "muted"; more.textContent = "Showing the latest 100 activities. The numbers above count everything in the period."; rec.appendChild(more);
 }
 $("vref").onclick = loadVis; $("vp").onchange = loadVis;
-$("vclr").onclick = async () => {
-  if (!confirm("Delete all visit data older than 90 days?")) return;
-  const { error } = await sb.from("visits").delete().lt("created_at", new Date(Date.now() - 90 * 864e5).toISOString());
-  if (error) return fail(error); toast("Old data deleted"); loadVis();
-};
 
 /* ---------- contact links ---------- */
 const KEYS = ["whatsapp", "telegram", "facebook", "email", "zangi", "tawk"];
